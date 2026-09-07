@@ -1,0 +1,30 @@
+ATUALIZAÇÃO INVENTÁRIO TABOCA V3
+
+1) SUPABASE - executar uma única vez:
+   - Abra o arquivo ATUALIZACAO_CADASTROS_DINAMICOS.sql
+   - Copie todo o conteúdo
+   - Supabase > Editor SQL > Nova consulta > Cole > Correr
+
+2) GITHUB - substituir/enviar:
+   - index.html
+   - app.js
+   - styles.css
+   - logo-taboca.png
+
+3) NÃO ALTERAR:
+   - config.js
+
+4) Depois do GitHub Pages atualizar:
+   - Abra o site
+   - Pressione Ctrl + F5
+
+O que esta versão adiciona:
+- Logo oficial Taboca no aplicativo
+- Logo oficial no relatório ao imprimir/salvar PDF
+- Adicionar material pela própria página
+- Remover material dos próximos inventários sem apagar histórico
+- Remover material apenas de um equipamento
+- Adicionar equipamento pela própria página
+- Escolher TAGs, imagem e materiais do novo equipamento
+- Remover equipamento sem apagar históricos
+- Senha administrativa solicitada uma vez por aba/sessão

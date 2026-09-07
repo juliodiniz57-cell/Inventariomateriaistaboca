@@ -4,15 +4,20 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>Inventário de Materiais</title>
-  <link rel="stylesheet" href="styles.css?v=20260907-equipamentos-v1"/>
+  <link rel="stylesheet" href="styles.css?v=20260907-cadastros-v2"/>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
   <header class="topbar">
-    <div>
-      <div class="brand">TABOCA • INVENTÁRIO</div>
-      <h1>Inventário de Materiais</h1>
-      <p>Conferência online, histórico e sugestão automática de compras.</p>
+    <div class="topbar-identity">
+      <div class="company-logo-shell">
+        <img class="company-logo" src="logo-taboca.png" alt="Taboca">
+      </div>
+      <div>
+        <div class="brand">INVENTÁRIO • MATERIAIS</div>
+        <h1>Inventário de Materiais</h1>
+        <p>Conferência online, histórico e sugestão automática de compras.</p>
+      </div>
     </div>
     <span id="connectionBadge" class="badge">Conectando...</span>
   </header>
@@ -59,6 +64,14 @@
 
     <section id="tab-compras" class="tab">
       <div class="panel">
+        <div class="print-report-header">
+          <img src="logo-taboca.png" alt="Taboca" class="print-logo">
+          <div>
+            <div class="print-kicker">TABOCA • INVENTÁRIO DE MATERIAIS</div>
+            <h1>Relatório de compra</h1>
+            <div id="printReportMeta" class="print-meta"></div>
+          </div>
+        </div>
         <div class="toolbar">
           <div>
             <h2>Relatório de compra</h2>
@@ -92,7 +105,12 @@
               <h2>Parâmetros por equipamento</h2>
               <p class="muted">Selecione um equipamento para acessar somente os filtros vinculados ao modelo e às TAGs.</p>
             </div>
-            <input id="searchEquipment" class="search" placeholder="Buscar modelo ou TAG"/>
+            <div class="equipment-toolbar-actions">
+              <button id="addMaterialBtn" class="primary" type="button">+ Material</button>
+              <button id="addEquipmentBtn" class="primary" type="button">+ Equipamento</button>
+              <button id="manageEquipmentBtn" type="button">Gerenciar equipamentos</button>
+              <input id="searchEquipment" class="search" placeholder="Buscar modelo ou TAG"/>
+            </div>
           </div>
           <div id="equipmentGrid" class="equipment-grid"></div>
         </div>
@@ -100,7 +118,10 @@
         <div id="equipmentMaterialsView" class="hidden">
           <div class="parameters-detail-toolbar">
             <button id="backToEquipmentParams" class="back-button" type="button">← Voltar aos equipamentos</button>
-            <input id="searchParams" class="search" placeholder="Buscar material ou descrição"/>
+            <div class="parameters-detail-actions">
+              <button id="addMaterialToEquipmentBtn" class="primary" type="button">+ Material neste equipamento</button>
+              <input id="searchParams" class="search" placeholder="Buscar material ou descrição"/>
+            </div>
           </div>
           <div id="selectedEquipmentHeader" class="selected-equipment"></div>
           <div id="paramsList" class="cards params-cards"></div>
@@ -122,8 +143,24 @@
     </div>
   </div>
 
+
+
+  <div id="catalogModal" class="modal hidden">
+    <div class="modal-card catalog-modal-card">
+      <div class="catalog-modal-head">
+        <div>
+          <h3 id="catalogModalTitle">Gerenciar cadastro</h3>
+          <p id="catalogModalSubtitle" class="muted"></p>
+        </div>
+        <button id="catalogModalClose" class="icon-button" type="button" aria-label="Fechar">×</button>
+      </div>
+      <div id="catalogModalBody"></div>
+      <div id="catalogModalFooter" class="actions catalog-modal-footer"></div>
+    </div>
+  </div>
+
   <div id="toast" class="toast"></div>
   <script src="config.js"></script>
-  <script src="app.js?v=20260907-equipamentos-v1"></script>
+  <script src="app.js?v=20260907-cadastros-v2"></script>
 </body>
 </html>
