@@ -1,0 +1,45 @@
+
+:root{
+  --bg:#f5f8f6; --panel:#fff; --text:#173026; --muted:#66756d;
+  --green:#16784a; --green2:#0f5e3a; --line:#dce8e0; --warn:#a56200; --danger:#b23a32;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:Inter,Segoe UI,Arial,sans-serif;background:var(--bg);color:var(--text)}
+.topbar{background:linear-gradient(120deg,#0f5e3a,#1d8b59);color:#fff;padding:22px clamp(16px,4vw,52px);display:flex;align-items:center;justify-content:space-between;gap:20px}
+.topbar h1{margin:4px 0 2px;font-size:clamp(25px,4vw,38px)}
+.topbar p{margin:0;opacity:.9}
+.brand{font-weight:800;letter-spacing:.08em;font-size:12px}
+.badge{background:#fff2;padding:8px 12px;border:1px solid #ffffff55;border-radius:99px;font-size:12px}
+.tabs{display:flex;gap:8px;padding:12px clamp(14px,4vw,52px);background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5;overflow:auto}
+button{border:1px solid var(--line);background:#fff;color:var(--text);padding:10px 14px;border-radius:10px;font-weight:700;cursor:pointer}
+button.active,.primary{background:var(--green);color:#fff;border-color:var(--green)}
+.success{background:#126a45;color:#fff;border-color:#126a45}
+button:disabled{opacity:.45;cursor:not-allowed}
+main{max-width:1280px;margin:auto;padding:18px}
+.tab{display:none}.tab.active{display:block}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px;margin-bottom:16px;box-shadow:0 3px 15px #1730260b}
+.grid{display:grid;gap:12px}.form-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+label{font-size:12px;font-weight:700;color:var(--muted);display:flex;flex-direction:column;gap:6px}
+input,select{width:100%;border:1px solid #ccd9d0;border-radius:10px;padding:11px;background:#fff;color:var(--text)}
+.actions{display:flex;gap:10px;margin-top:14px}
+.toolbar{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:12px}
+.toolbar h2,.panel h2{margin:0 0 5px}.muted{color:var(--muted);font-size:13px}.search{max-width:340px}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:14px 0}
+.kpis div{border:1px solid var(--line);border-radius:12px;padding:12px;text-align:center;background:#f9fcfa}
+.kpis span{display:block;font-size:24px;font-weight:900}.kpis small{color:var(--muted)}
+.cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.card{border:1px solid var(--line);border-radius:14px;padding:14px;background:#fff}
+.card-head{display:flex;gap:10px;justify-content:space-between;align-items:flex-start}
+.code{font-size:18px;font-weight:900;color:var(--green2)}.desc{font-weight:700;margin-top:3px}.tag{font-size:11px;background:#edf6f0;border-radius:99px;padding:5px 8px;white-space:nowrap}
+.row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px;align-items:end}
+.row.three{grid-template-columns:repeat(3,1fr)}
+.status{margin-top:10px;padding:8px 10px;border-radius:9px;font-weight:800;font-size:12px}
+.status.ok{background:#e7f7ee;color:#146d43}.status.buy{background:#fff0e0;color:#8b5100}.status.pending{background:#eef1ef;color:#67716c}
+.table-wrap{overflow:auto;margin-top:14px}table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:10px;border-bottom:1px solid var(--line);text-align:left}th{background:#f4f8f5}
+.history-item{border:1px solid var(--line);border-radius:12px;padding:13px;margin:9px 0;display:flex;justify-content:space-between;gap:12px;align-items:center}
+.purchase-summary{margin-top:12px;font-weight:800}
+.hidden{display:none!important}
+.toast{position:fixed;right:18px;bottom:18px;background:#173026;color:#fff;padding:12px 16px;border-radius:10px;opacity:0;pointer-events:none;transform:translateY(8px);transition:.2s;max-width:360px}
+.toast.show{opacity:1;transform:none}
+@media(max-width:800px){.form-grid,.cards{grid-template-columns:1fr}.row{grid-template-columns:repeat(2,1fr)}.kpis{grid-template-columns:repeat(2,1fr)}.toolbar{align-items:stretch;flex-direction:column}.search{max-width:none}.topbar{align-items:flex-start;flex-direction:column}.history-item{align-items:flex-start;flex-direction:column}}
+@media print{.topbar,.tabs,#printReport,#purchaseInventorySelect{display:none!important}body{background:#fff}main{max-width:none;padding:0}.tab{display:none!important}#tab-compras{display:block!important}.panel{box-shadow:none;border:0}}

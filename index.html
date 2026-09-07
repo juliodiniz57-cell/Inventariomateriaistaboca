@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Inventário de Materiais</title>
+  <link rel="stylesheet" href="styles.css"/>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <div class="brand">TABOCA • INVENTÁRIO</div>
+      <h1>Inventário de Materiais</h1>
+      <p>Conferência online, histórico e sugestão automática de compras.</p>
+    </div>
+    <span id="connectionBadge" class="badge">Conectando...</span>
+  </header>
+
+  <nav class="tabs">
+    <button data-tab="inventario" class="active">Inventário</button>
+    <button data-tab="compras">Comprar</button>
+    <button data-tab="historico">Histórico</button>
+    <button data-tab="parametros">Parâmetros</button>
+  </nav>
+
+  <main>
+    <section id="tab-inventario" class="tab active">
+      <div class="panel">
+        <h2>Novo inventário</h2>
+        <div class="grid form-grid">
+          <label>Responsável<input id="responsible" placeholder="Nome de quem está conferindo"/></label>
+          <label>Área<input id="area" placeholder="Ex.: Almoxarifado / Metalurgia"/></label>
+          <label class="grow">Observação<input id="notes" placeholder="Opcional"/></label>
+        </div>
+        <div class="actions">
+          <button id="startInventory" class="primary">Iniciar inventário</button>
+          <button id="finishInventory" class="success" disabled>Finalizar inventário</button>
+        </div>
+      </div>
+
+      <div id="inventoryWorkspace" class="panel hidden">
+        <div class="toolbar">
+          <div>
+            <h2>Conferência</h2>
+            <div id="inventoryMeta" class="muted"></div>
+          </div>
+          <input id="searchMaterial" class="search" placeholder="Buscar material ou descrição"/>
+        </div>
+        <div class="kpis">
+          <div><span id="kpiTotal">0</span><small>Itens</small></div>
+          <div><span id="kpiChecked">0</span><small>Conferidos</small></div>
+          <div><span id="kpiPending">0</span><small>Pendentes</small></div>
+          <div><span id="kpiBuy">0</span><small>Comprar</small></div>
+        </div>
+        <div id="materialList" class="cards"></div>
+      </div>
+    </section>
+
+    <section id="tab-compras" class="tab">
+      <div class="panel">
+        <div class="toolbar">
+          <div>
+            <h2>Relatório de compra</h2>
+            <p class="muted">Itens abaixo do estoque mínimo no inventário selecionado.</p>
+          </div>
+          <button id="printReport">Imprimir / PDF</button>
+        </div>
+        <select id="purchaseInventorySelect"></select>
+        <div id="purchaseSummary" class="purchase-summary"></div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Material</th><th>Descrição</th><th>Contado</th><th>Mínimo</th><th>Alvo</th><th>Sug. compra</th></tr></thead>
+            <tbody id="purchaseTable"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section id="tab-historico" class="tab">
+      <div class="panel">
+        <h2>Inventários realizados</h2>
+        <div id="historyList" class="history"></div>
+      </div>
+    </section>
+
+    <section id="tab-parametros" class="tab">
+      <div class="panel">
+        <div class="toolbar">
+          <div>
+            <h2>Parâmetros de compra</h2>
+            <p class="muted">Você define o mínimo, o estoque-alvo e o múltiplo de compra.</p>
+          </div>
+          <input id="searchParams" class="search" placeholder="Buscar material"/>
+        </div>
+        <div id="paramsList" class="cards"></div>
+      </div>
+    </section>
+  </main>
+
+  <div id="toast" class="toast"></div>
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
