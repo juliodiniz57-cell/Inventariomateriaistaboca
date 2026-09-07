@@ -98,6 +98,19 @@
     </section>
   </main>
 
+
+  <div id="adminModal" class="modal hidden">
+    <div class="modal-card">
+      <h3 id="adminModalTitle">Ação administrativa</h3>
+      <p id="adminModalText" class="muted">Digite a senha administrativa para continuar.</p>
+      <input id="adminPassword" type="password" placeholder="Senha administrativa" autocomplete="current-password"/>
+      <div class="actions">
+        <button id="adminCancel">Cancelar</button>
+        <button id="adminConfirm" class="primary">Confirmar</button>
+      </div>
+    </div>
+  </div>
+
   <div id="toast" class="toast"></div>
   <script src="config.js"></script>
   <script src="app.js"></script>

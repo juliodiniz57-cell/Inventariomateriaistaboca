@@ -142,7 +142,16 @@ async function finishInventory(){
     return i.counted_qty===null || i.counted_qty===undefined;
   }).length;
   if(pending){toast(`Ainda existem ${pending} itens sem conferência.`);return}
-  const {error}=await sb.from("inventories").update({status:"finished",finished_at:new Date().toISOString()}).eq("id",currentInventory.id);
+  const responsible=$("responsible").value.trim();
+  if(!responsible){toast("Informe o responsável.");return}
+  const payload={
+    responsible,
+    area:$("area").value.trim(),
+    notes:$("notes").value.trim(),
+    status:"finished",
+    finished_at:new Date().toISOString()
+  };
+  const {error}=await sb.from("inventories").update(payload).eq("id",currentInventory.id);
   if(error){toast(error.message);return}
   toast("Inventário finalizado. Relatório de compra atualizado.");
   await loadInventories();
@@ -182,7 +191,11 @@ function renderHistory(){
     <div class="history-item">
       <div><strong>${new Date(i.inventory_date+"T12:00:00").toLocaleDateString("pt-BR")}</strong> • ${i.responsible}
       <div class="muted">${i.area||"Sem área"} • ${i.status==="finished"?"Finalizado":"Em aberto"}</div></div>
-      <button onclick="openReport('${i.id}')">Ver relatório</button>
+      <div class="history-actions">
+        <button onclick="openReport('${i.id}')">Ver relatório</button>
+        <button onclick="requestAdminAction('edit','${i.id}')">Editar</button>
+        <button class="danger" onclick="requestAdminAction('delete','${i.id}')">Excluir</button>
+      </div>
     </div>`).join(""):`<p class="muted">Nenhum inventário registrado.</p>`;
 }
 
@@ -205,6 +218,75 @@ async function loadPurchaseReport(id){
     <td>${fmt(r.min_stock)}</td><td>${fmt(r.target_stock)}</td><td><strong>${fmt(r.suggested_purchase_qty)}</strong></td>
   </tr>`).join(""):`<tr><td colspan="6">Nenhum item abaixo do estoque mínimo.</td></tr>`;
 }
+
+
+let pendingAdminAction = null;
+
+window.requestAdminAction = (action, inventoryId) => {
+  pendingAdminAction = {action, inventoryId};
+  $("adminPassword").value = "";
+  $("adminModalTitle").textContent = action==="delete" ? "Excluir inventário" : "Editar inventário";
+  $("adminModalText").textContent = action==="delete"
+    ? "Esta ação excluirá definitivamente o relatório e seus itens. Digite a senha administrativa."
+    : "Digite a senha administrativa para reabrir e editar este inventário.";
+  $("adminConfirm").className = action==="delete" ? "danger" : "primary";
+  $("adminModal").classList.remove("hidden");
+  setTimeout(()=>$("adminPassword").focus(),50);
+};
+
+function closeAdminModal(){
+  pendingAdminAction=null;
+  $("adminPassword").value="";
+  $("adminModal").classList.add("hidden");
+}
+
+$("adminCancel").onclick=closeAdminModal;
+$("adminModal").onclick=e=>{ if(e.target.id==="adminModal") closeAdminModal(); };
+
+$("adminConfirm").onclick=async()=>{
+  if(!pendingAdminAction) return;
+  const pwd=$("adminPassword").value;
+  if(!pwd){toast("Digite a senha administrativa.");return}
+  const {action,inventoryId}=pendingAdminAction;
+  $("adminConfirm").disabled=true;
+  try{
+    if(action==="delete"){
+      const {data,error}=await sb.rpc("admin_delete_inventory",{p_inventory_id:inventoryId,p_password:pwd});
+      if(error) throw error;
+      if(!data){toast("Senha incorreta.");return}
+      closeAdminModal();
+      await loadInventories();
+      renderHistory();
+      refreshPurchaseSelect();
+      toast("Inventário excluído.");
+    }else{
+      const {data,error}=await sb.rpc("admin_reopen_inventory",{p_inventory_id:inventoryId,p_password:pwd});
+      if(error) throw error;
+      if(!data){toast("Senha incorreta.");return}
+      closeAdminModal();
+      const inv=inventories.find(x=>x.id===inventoryId) || (await sb.from("inventories").select("*").eq("id",inventoryId).single()).data;
+      currentInventory={...inv,status:"open",finished_at:null};
+      $("responsible").value=currentInventory.responsible||"";
+      $("area").value=currentInventory.area||"";
+      $("notes").value=currentInventory.notes||"";
+      await loadCurrentItems();
+      $("inventoryWorkspace").classList.remove("hidden");
+      $("finishInventory").disabled=false;
+      $("inventoryMeta").textContent=`EDITANDO • ${currentInventory.responsible} • ${new Date(currentInventory.inventory_date+"T12:00:00").toLocaleDateString("pt-BR")}`;
+      renderInventory();
+      document.querySelector('[data-tab="inventario"]').click();
+      toast("Inventário reaberto para edição.");
+    }
+  }catch(err){
+    toast(err.message || "Não foi possível concluir a ação.");
+  }finally{
+    $("adminConfirm").disabled=false;
+  }
+};
+
+$("adminPassword").addEventListener("keydown",e=>{
+  if(e.key==="Enter") $("adminConfirm").click();
+});
 
 window.openReport = id => {
   document.querySelector('[data-tab="compras"]').click();

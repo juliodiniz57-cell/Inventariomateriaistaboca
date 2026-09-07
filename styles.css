@@ -43,3 +43,10 @@ input,select{width:100%;border:1px solid #ccd9d0;border-radius:10px;padding:11px
 .toast.show{opacity:1;transform:none}
 @media(max-width:800px){.form-grid,.cards{grid-template-columns:1fr}.row{grid-template-columns:repeat(2,1fr)}.kpis{grid-template-columns:repeat(2,1fr)}.toolbar{align-items:stretch;flex-direction:column}.search{max-width:none}.topbar{align-items:flex-start;flex-direction:column}.history-item{align-items:flex-start;flex-direction:column}}
 @media print{.topbar,.tabs,#printReport,#purchaseInventorySelect{display:none!important}body{background:#fff}main{max-width:none;padding:0}.tab{display:none!important}#tab-compras{display:block!important}.panel{box-shadow:none;border:0}}
+
+.danger{background:#b23a32;color:#fff;border-color:#b23a32}
+.history-actions{display:flex;gap:8px;flex-wrap:wrap}
+.modal{position:fixed;inset:0;background:#0007;display:flex;align-items:center;justify-content:center;padding:18px;z-index:50}
+.modal-card{width:min(420px,100%);background:#fff;border-radius:16px;padding:20px;box-shadow:0 20px 70px #0004}
+.modal-card h3{margin:0 0 6px}
+.modal-card .actions{justify-content:flex-end}
