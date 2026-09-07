@@ -4,7 +4,7 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>Inventário de Materiais</title>
-  <link rel="stylesheet" href="styles.css?v=20260907-cadastros-v2"/>
+  <link rel="stylesheet" href="styles.css?v=20260907-inventario-compras-v4"/>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
@@ -24,7 +24,7 @@
 
   <nav class="tabs">
     <button data-tab="inventario" class="active">Inventário</button>
-    <button data-tab="compras">Comprar</button>
+    <button data-tab="compras">Relatório</button>
     <button data-tab="historico">Histórico</button>
     <button data-tab="parametros">Parâmetros</button>
   </nav>
@@ -57,6 +57,7 @@
           <div><span id="kpiChecked">0</span><small>Conferidos</small></div>
           <div><span id="kpiPending">0</span><small>Pendentes</small></div>
           <div><span id="kpiBuy">0</span><small>Comprar</small></div>
+          <div><span id="kpiInPurchase">0</span><small>Já em compra</small></div>
         </div>
         <div id="materialList" class="cards"></div>
       </div>
@@ -68,14 +69,14 @@
           <img src="logo-taboca.png" alt="Taboca" class="print-logo">
           <div>
             <div class="print-kicker">TABOCA • INVENTÁRIO DE MATERIAIS</div>
-            <h1>Relatório de compra</h1>
+            <h1>Relatório do inventário</h1>
             <div id="printReportMeta" class="print-meta"></div>
           </div>
         </div>
         <div class="toolbar">
           <div>
-            <h2>Relatório de compra</h2>
-            <p class="muted">Itens abaixo do estoque mínimo no inventário selecionado.</p>
+            <h2>Relatório do inventário</h2>
+            <p class="muted">Visão completa dos itens inventariados: OK, já em compra e necessidades de nova compra.</p>
           </div>
           <button id="printReport">Imprimir / PDF</button>
         </div>
@@ -83,7 +84,7 @@
         <div id="purchaseSummary" class="purchase-summary"></div>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>Material</th><th>Descrição</th><th>Contado</th><th>Mínimo</th><th>Alvo</th><th>Sug. compra</th></tr></thead>
+            <thead><tr><th>Material</th><th>Descrição</th><th>Contado</th><th>Mínimo</th><th>Alvo</th><th>Situação</th><th>Pedido</th><th>Qtd. pedida</th><th>Sug. nova compra</th></tr></thead>
             <tbody id="purchaseTable"></tbody>
           </table>
         </div>
@@ -161,6 +162,6 @@
 
   <div id="toast" class="toast"></div>
   <script src="config.js"></script>
-  <script src="app.js?v=20260907-cadastros-v2"></script>
+  <script src="app.js?v=20260907-inventario-compras-v4"></script>
 </body>
 </html>

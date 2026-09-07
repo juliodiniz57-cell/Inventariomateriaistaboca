@@ -33,8 +33,11 @@ function toast(msg){
   setTimeout(()=>$("toast").classList.remove("show"),2600);
 }
 
-function calc(m, counted){
+function calc(m, counted, item={}){
   if (counted === null || counted === undefined || counted === "") return {status:"PENDENTE", qty:0};
+  if(item.has_existing_purchase){
+    return {status:"EM COMPRA", qty:0};
+  }
   const q=n(counted), min=n(m.min_stock), target=n(m.target_stock), mult=Math.max(n(m.purchase_multiple),1);
   if(q < min){
     return {status:"COMPRAR", qty: Math.ceil(Math.max(target-q,0)/mult)*mult};
@@ -146,10 +149,29 @@ async function loadCurrentItems(){
   currentItems=new Map((data||[]).map(x=>[x.material_id,x]));
 }
 
-async function saveCount(materialId,value,obs){
-  const qty=value===""?null:n(value);
+async function saveInventoryItem(materialId){
   const row=currentItems.get(materialId);
-  const payload={counted_qty:qty,observation:obs||null,checked_at:qty===null?null:new Date().toISOString()};
+  if(!row) return;
+
+  const countEl=document.querySelector(`.count[data-id="${materialId}"]`);
+  const obsEl=document.querySelector(`.obs[data-id="${materialId}"]`);
+  const hasPurchaseEl=document.querySelector(`.has-purchase[data-id="${materialId}"]`);
+  const orderEl=document.querySelector(`.purchase-order[data-id="${materialId}"]`);
+  const orderQtyEl=document.querySelector(`.purchase-order-qty[data-id="${materialId}"]`);
+
+  const rawQty=countEl?.value ?? "";
+  const qty=rawQty===""?null:n(rawQty);
+  const hasExistingPurchase=Boolean(hasPurchaseEl?.checked);
+
+  const payload={
+    counted_qty:qty,
+    observation:(obsEl?.value||"").trim()||null,
+    checked_at:qty===null?null:new Date().toISOString(),
+    has_existing_purchase:hasExistingPurchase,
+    purchase_order_number:hasExistingPurchase ? ((orderEl?.value||"").trim()||null) : null,
+    purchase_order_qty:hasExistingPurchase && (orderQtyEl?.value??"")!=="" ? n(orderQtyEl.value) : null
+  };
+
   const {data,error}=await sb.from("inventory_items").update(payload).eq("id",row.id).select().single();
   if(error){toast(error.message);return}
   currentItems.set(materialId,data);
@@ -159,48 +181,108 @@ async function saveCount(materialId,value,obs){
 function renderInventory(filter=""){
   const term=filter.trim().toLowerCase();
   const list=materials.filter(m=>(m.material_code+" "+m.description).toLowerCase().includes(term));
+
   $("materialList").innerHTML=list.map(m=>{
     const item=currentItems.get(m.id)||{};
     const c=item.counted_qty;
-    const r=calc(m,c);
-    const cls=r.status==="OK"?"ok":r.status==="COMPRAR"?"buy":"pending";
-    return `<div class="card">
-      <div class="card-head"><div><div class="code">${m.material_code}</div><div class="desc">${m.description}</div></div><span class="tag">${m.type}</span></div>
+    const hasPurchase=Boolean(item.has_existing_purchase);
+    const r=calc(m,c,item);
+    const cls=r.status==="OK"?"ok":r.status==="COMPRAR"?"buy":r.status==="EM COMPRA"?"in-purchase":"pending";
+
+    let statusText=r.status;
+    if(r.status==="COMPRAR") statusText += ` • sugestão: ${fmt(r.qty)}`;
+    if(r.status==="EM COMPRA"){
+      const pedido=item.purchase_order_number ? ` • Pedido: ${item.purchase_order_number}` : "";
+      const qtd=item.purchase_order_qty!==null && item.purchase_order_qty!==undefined ? ` • Qtd. solicitada: ${fmt(item.purchase_order_qty)}` : "";
+      statusText += pedido + qtd;
+    }
+
+    return `<div class="card inventory-card">
+      <div class="card-head">
+        <div>
+          <div class="code">${m.material_code}</div>
+          <div class="desc">${m.description}</div>
+        </div>
+        <span class="tag">${m.type}</span>
+      </div>
+
       <div class="row">
         <label>Qtd. 2025<input value="${m.consumption_2025}" disabled></label>
         <label>Mínimo<input value="${fmt(m.min_stock)}" disabled></label>
         <label>Alvo<input value="${fmt(m.target_stock)}" disabled></label>
         <label>Qtd. contada<input class="count" inputmode="decimal" data-id="${m.id}" value="${c??""}" placeholder="0"></label>
       </div>
-      <label style="margin-top:8px">Observação<input class="obs" data-id="${m.id}" value="${item.observation??""}" placeholder="Opcional"></label>
-      <div class="status ${cls}">${r.status}${r.status==="COMPRAR" ? ` • sugestão: ${fmt(r.qty)}`:""}</div>
+
+      <div class="inventory-extra-row">
+        <label>Observação
+          <input class="obs" data-id="${m.id}" value="${item.observation??""}" placeholder="Opcional">
+        </label>
+
+        <label class="purchase-toggle-label">
+          <span>Já possui compra?</span>
+          <span class="purchase-toggle-control">
+            <input class="has-purchase" type="checkbox" data-id="${m.id}" ${hasPurchase?"checked":""}>
+            <strong>${hasPurchase?"SIM":"NÃO"}</strong>
+          </span>
+        </label>
+      </div>
+
+      <div class="purchase-details ${hasPurchase?"":"hidden"}" data-purchase-details="${m.id}">
+        <label>Nº do pedido de compra
+          <input class="purchase-order" data-id="${m.id}" value="${item.purchase_order_number??""}" placeholder="Ex.: 4500341886">
+        </label>
+        <label>Quantidade solicitada
+          <input class="purchase-order-qty" data-id="${m.id}" type="number" min="0" step="1" value="${item.purchase_order_qty??""}" placeholder="0">
+        </label>
+        <div class="purchase-info-note">Este item não gerará nova necessidade de compra enquanto estiver marcado como “Já possui compra”.</div>
+      </div>
+
+      <div class="status ${cls}">${statusText}</div>
     </div>`;
   }).join("");
 
-  document.querySelectorAll(".count").forEach(inp=>inp.onchange=()=>{
-    const obs=document.querySelector(`.obs[data-id="${inp.dataset.id}"]`)?.value||"";
-    saveCount(inp.dataset.id,inp.value,obs);
+  document.querySelectorAll(".count,.obs,.purchase-order,.purchase-order-qty").forEach(inp=>{
+    inp.onchange=()=>saveInventoryItem(inp.dataset.id);
   });
-  document.querySelectorAll(".obs").forEach(inp=>inp.onchange=()=>{
-    const count=document.querySelector(`.count[data-id="${inp.dataset.id}"]`)?.value||"";
-    saveCount(inp.dataset.id,count,inp.value);
+
+  document.querySelectorAll(".has-purchase").forEach(inp=>{
+    inp.onchange=()=>{
+      const details=document.querySelector(`[data-purchase-details="${inp.dataset.id}"]`);
+      if(details) details.classList.toggle("hidden",!inp.checked);
+      saveInventoryItem(inp.dataset.id);
+    };
   });
 
   const all=materials.map(m=>({m,item:currentItems.get(m.id)||{}}));
   const checked=all.filter(x=>x.item.counted_qty!==null && x.item.counted_qty!==undefined).length;
-  const buy=all.filter(x=>calc(x.m,x.item.counted_qty).status==="COMPRAR").length;
+  const buy=all.filter(x=>calc(x.m,x.item.counted_qty,x.item).status==="COMPRAR").length;
+  const inPurchase=all.filter(x=>calc(x.m,x.item.counted_qty,x.item).status==="EM COMPRA").length;
+
   $("kpiTotal").textContent=materials.length;
   $("kpiChecked").textContent=checked;
   $("kpiPending").textContent=materials.length-checked;
   $("kpiBuy").textContent=buy;
+  if($("kpiInPurchase")) $("kpiInPurchase").textContent=inPurchase;
 }
-
 async function finishInventory(){
   const pending=materials.filter(m=>{
     const i=currentItems.get(m.id)||{};
     return i.counted_qty===null || i.counted_qty===undefined;
   }).length;
   if(pending){toast(`Ainda existem ${pending} itens sem conferência.`);return}
+
+  const purchaseIncomplete=materials.filter(m=>{
+    const i=currentItems.get(m.id)||{};
+    return Boolean(i.has_existing_purchase) &&
+      (!String(i.purchase_order_number||"").trim() ||
+       i.purchase_order_qty===null || i.purchase_order_qty===undefined || n(i.purchase_order_qty)<=0);
+  }).length;
+
+  if(purchaseIncomplete){
+    toast(`Existem ${purchaseIncomplete} itens marcados como já comprados sem nº do pedido ou quantidade solicitada.`);
+    return;
+  }
+
   const responsible=$("responsible").value.trim();
   if(!responsible){toast("Informe o responsável.");return}
   const payload={
@@ -212,7 +294,7 @@ async function finishInventory(){
   };
   const {error}=await sb.from("inventories").update(payload).eq("id",currentInventory.id);
   if(error){toast(error.message);return}
-  toast("Inventário finalizado. Relatório de compra atualizado.");
+  toast("Inventário finalizado. Relatório geral atualizado.");
   await loadInventories();
   refreshPurchaseSelect(currentInventory.id);
   document.querySelector('[data-tab="compras"]').click();
@@ -635,15 +717,50 @@ function refreshPurchaseSelect(preselect){
 }
 
 async function loadPurchaseReport(id){
-  const {data,error}=await sb.from("v_inventory_report").select("*").eq("inventory_id",id).eq("purchase_status","COMPRAR").order("material_code");
+  const {data,error}=await sb
+    .from("v_inventory_report")
+    .select("*")
+    .eq("inventory_id",id)
+    .not("counted_qty","is",null)
+    .order("material_code");
+
   if(error){toast(error.message);return}
+
   const rows=data||[];
-  const totalQty=rows.reduce((s,r)=>s+n(r.suggested_purchase_qty),0);
-  $("purchaseSummary").textContent=`${rows.length} itens precisam de compra • ${fmt(totalQty)} unidades sugeridas`;
-  $("purchaseTable").innerHTML=rows.length?rows.map(r=>`<tr>
-    <td><strong>${r.material_code}</strong></td><td>${r.description}</td><td>${fmt(r.counted_qty)}</td>
-    <td>${fmt(r.min_stock)}</td><td>${fmt(r.target_stock)}</td><td><strong>${fmt(r.suggested_purchase_qty)}</strong></td>
-  </tr>`).join(""):`<tr><td colspan="6">Nenhum item abaixo do estoque mínimo.</td></tr>`;
+  const buyRows=rows.filter(r=>r.purchase_status==="COMPRAR");
+  const okRows=rows.filter(r=>r.purchase_status==="OK");
+  const inPurchaseRows=rows.filter(r=>r.purchase_status==="EM COMPRA");
+  const totalQty=buyRows.reduce((s,r)=>s+n(r.suggested_purchase_qty),0);
+
+  $("purchaseSummary").innerHTML=`
+    <span><strong>${rows.length}</strong> itens inventariados</span>
+    <span><strong>${okRows.length}</strong> OK</span>
+    <span><strong>${inPurchaseRows.length}</strong> já possuem compra</span>
+    <span><strong>${buyRows.length}</strong> precisam de nova compra</span>
+    <span><strong>${fmt(totalQty)}</strong> unidades sugeridas</span>
+  `;
+
+  $("purchaseTable").innerHTML=rows.length?rows.map(r=>{
+    const statusClass=r.purchase_status==="OK"?"report-status-ok":
+      r.purchase_status==="EM COMPRA"?"report-status-purchase":
+      r.purchase_status==="COMPRAR"?"report-status-buy":"report-status-pending";
+
+    const pedido=r.has_existing_purchase ? (r.purchase_order_number||"—") : "—";
+    const qtdPedido=r.has_existing_purchase && r.purchase_order_qty!==null ? fmt(r.purchase_order_qty) : "—";
+    const sugestao=r.purchase_status==="COMPRAR" ? fmt(r.suggested_purchase_qty) : "—";
+
+    return `<tr>
+      <td><strong>${r.material_code}</strong></td>
+      <td>${r.description}</td>
+      <td>${fmt(r.counted_qty)}</td>
+      <td>${fmt(r.min_stock)}</td>
+      <td>${fmt(r.target_stock)}</td>
+      <td><span class="report-status ${statusClass}">${r.purchase_status}</span></td>
+      <td>${pedido}</td>
+      <td>${qtdPedido}</td>
+      <td><strong>${sugestao}</strong></td>
+    </tr>`;
+  }).join(""):`<tr><td colspan="9">Nenhum item inventariado neste relatório.</td></tr>`;
 
   const inv=inventories.find(x=>x.id===id);
   if(inv){
@@ -653,7 +770,6 @@ async function loadPurchaseReport(id){
     $("printReportMeta").textContent="";
   }
 }
-
 
 
 let pendingAdminAction = null;

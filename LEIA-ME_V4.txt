@@ -1,0 +1,27 @@
+ATUALIZAÇÃO INVENTÁRIO TABOCA V4
+
+NOVO:
+- No momento do inventário, cada material possui a opção "Já possui compra?"
+- Quando marcado SIM, informar Nº do pedido e Quantidade solicitada.
+- Item já em compra NÃO gera nova necessidade de compra.
+- O relatório agora mostra TODOS os itens inventariados:
+  OK / EM COMPRA / COMPRAR.
+- O relatório mostra pedido e quantidade já solicitada.
+- Logo Taboca e demais recursos da V3 foram mantidos.
+
+PASSO 1 — SUPABASE (UMA ÚNICA VEZ)
+1. Abra ATUALIZACAO_COMPRA_EXISTENTE_RELATORIO.sql
+2. Copie todo o conteúdo.
+3. Supabase > Editor SQL > Nova consulta > Cole > Correr.
+4. Aguarde "Sucesso".
+
+PASSO 2 — GITHUB
+Substitua SOMENTE:
+- index.html
+- app.js
+- styles.css
+
+Não altere config.js.
+Não é necessário reenviar logo-taboca.png se ele já estiver no repositório.
+
+Depois aguarde o GitHub Pages atualizar e pressione Ctrl + F5.
