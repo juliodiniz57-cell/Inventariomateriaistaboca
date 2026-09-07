@@ -4,7 +4,7 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>Inventário de Materiais</title>
-  <link rel="stylesheet" href="styles.css"/>
+  <link rel="stylesheet" href="styles.css?v=20260907-equipamentos-v1"/>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
@@ -86,14 +86,25 @@
 
     <section id="tab-parametros" class="tab">
       <div class="panel">
-        <div class="toolbar">
-          <div>
-            <h2>Parâmetros de compra</h2>
-            <p class="muted">Você define o mínimo, o estoque-alvo e o múltiplo de compra.</p>
+        <div id="equipmentParamsView">
+          <div class="toolbar equipment-toolbar">
+            <div>
+              <h2>Parâmetros por equipamento</h2>
+              <p class="muted">Selecione um equipamento para acessar somente os filtros vinculados ao modelo e às TAGs.</p>
+            </div>
+            <input id="searchEquipment" class="search" placeholder="Buscar modelo ou TAG"/>
           </div>
-          <input id="searchParams" class="search" placeholder="Buscar material"/>
+          <div id="equipmentGrid" class="equipment-grid"></div>
         </div>
-        <div id="paramsList" class="cards"></div>
+
+        <div id="equipmentMaterialsView" class="hidden">
+          <div class="parameters-detail-toolbar">
+            <button id="backToEquipmentParams" class="back-button" type="button">← Voltar aos equipamentos</button>
+            <input id="searchParams" class="search" placeholder="Buscar material ou descrição"/>
+          </div>
+          <div id="selectedEquipmentHeader" class="selected-equipment"></div>
+          <div id="paramsList" class="cards params-cards"></div>
+        </div>
       </div>
     </section>
   </main>
@@ -113,6 +124,6 @@
 
   <div id="toast" class="toast"></div>
   <script src="config.js"></script>
-  <script src="app.js?v=20260907-admin-session-v3"></script>
+  <script src="app.js?v=20260907-equipamentos-v1"></script>
 </body>
 </html>
