@@ -221,23 +221,96 @@ async function loadPurchaseReport(id){
 
 
 let pendingAdminAction = null;
+let adminSessionPassword = null;
 
-window.requestAdminAction = (action, inventoryId) => {
+function showAdminModal(action, inventoryId, message=null){
   pendingAdminAction = {action, inventoryId};
   $("adminPassword").value = "";
   $("adminModalTitle").textContent = action==="delete" ? "Excluir inventário" : "Editar inventário";
-  $("adminModalText").textContent = action==="delete"
+  $("adminModalText").textContent = message || (action==="delete"
     ? "Esta ação excluirá definitivamente o relatório e seus itens. Digite a senha administrativa."
-    : "Digite a senha administrativa para reabrir e editar este inventário.";
+    : "Digite a senha administrativa para reabrir e editar este inventário.");
   $("adminConfirm").className = action==="delete" ? "danger" : "primary";
   $("adminModal").classList.remove("hidden");
   setTimeout(()=>$("adminPassword").focus(),50);
+}
+
+window.requestAdminAction = async (action, inventoryId) => {
+  if(adminSessionPassword){
+    if(action==="delete" && !window.confirm("Deseja excluir definitivamente este inventário?")){
+      return;
+    }
+    await performAdminAction(action, inventoryId, adminSessionPassword, true);
+    return;
+  }
+  showAdminModal(action, inventoryId);
 };
 
 function closeAdminModal(){
   pendingAdminAction=null;
   $("adminPassword").value="";
   $("adminModal").classList.add("hidden");
+}
+
+async function performAdminAction(action, inventoryId, pwd, fromSession=false){
+  try{
+    if(action==="delete"){
+      const {data,error}=await sb.rpc("admin_delete_inventory",{p_inventory_id:inventoryId,p_password:pwd});
+      if(error) throw error;
+      if(!data){
+        adminSessionPassword=null;
+        if(fromSession){
+          showAdminModal(action, inventoryId, "A autorização administrativa expirou. Digite a senha novamente.");
+        }else{
+          toast("Senha incorreta.");
+        }
+        return false;
+      }
+
+      adminSessionPassword=pwd;
+      closeAdminModal();
+      await loadInventories();
+      renderHistory();
+      refreshPurchaseSelect();
+      toast("Inventário excluído.");
+      return true;
+    }
+
+    const {data,error}=await sb.rpc("admin_reopen_inventory",{p_inventory_id:inventoryId,p_password:pwd});
+    if(error) throw error;
+    if(!data){
+      adminSessionPassword=null;
+      if(fromSession){
+        showAdminModal(action, inventoryId, "A autorização administrativa expirou. Digite a senha novamente.");
+      }else{
+        toast("Senha incorreta.");
+      }
+      return false;
+    }
+
+    adminSessionPassword=pwd;
+    closeAdminModal();
+
+    const inv=inventories.find(x=>x.id===inventoryId) ||
+      (await sb.from("inventories").select("*").eq("id",inventoryId).single()).data;
+
+    currentInventory={...inv,status:"open",finished_at:null};
+    $("responsible").value=currentInventory.responsible||"";
+    $("area").value=currentInventory.area||"";
+    $("notes").value=currentInventory.notes||"";
+    await loadCurrentItems();
+    $("inventoryWorkspace").classList.remove("hidden");
+    $("finishInventory").disabled=false;
+    $("inventoryMeta").textContent=`EDITANDO • ${currentInventory.responsible} • ${new Date(currentInventory.inventory_date+"T12:00:00").toLocaleDateString("pt-BR")}`;
+    renderInventory();
+    document.querySelector('[data-tab="inventario"]').click();
+    toast("Inventário reaberto para edição.");
+    return true;
+  }catch(err){
+    if(fromSession) adminSessionPassword=null;
+    toast(err.message || "Não foi possível concluir a ação.");
+    return false;
+  }
 }
 
 $("adminCancel").onclick=closeAdminModal;
@@ -247,38 +320,11 @@ $("adminConfirm").onclick=async()=>{
   if(!pendingAdminAction) return;
   const pwd=$("adminPassword").value;
   if(!pwd){toast("Digite a senha administrativa.");return}
+
   const {action,inventoryId}=pendingAdminAction;
   $("adminConfirm").disabled=true;
   try{
-    if(action==="delete"){
-      const {data,error}=await sb.rpc("admin_delete_inventory",{p_inventory_id:inventoryId,p_password:pwd});
-      if(error) throw error;
-      if(!data){toast("Senha incorreta.");return}
-      closeAdminModal();
-      await loadInventories();
-      renderHistory();
-      refreshPurchaseSelect();
-      toast("Inventário excluído.");
-    }else{
-      const {data,error}=await sb.rpc("admin_reopen_inventory",{p_inventory_id:inventoryId,p_password:pwd});
-      if(error) throw error;
-      if(!data){toast("Senha incorreta.");return}
-      closeAdminModal();
-      const inv=inventories.find(x=>x.id===inventoryId) || (await sb.from("inventories").select("*").eq("id",inventoryId).single()).data;
-      currentInventory={...inv,status:"open",finished_at:null};
-      $("responsible").value=currentInventory.responsible||"";
-      $("area").value=currentInventory.area||"";
-      $("notes").value=currentInventory.notes||"";
-      await loadCurrentItems();
-      $("inventoryWorkspace").classList.remove("hidden");
-      $("finishInventory").disabled=false;
-      $("inventoryMeta").textContent=`EDITANDO • ${currentInventory.responsible} • ${new Date(currentInventory.inventory_date+"T12:00:00").toLocaleDateString("pt-BR")}`;
-      renderInventory();
-      document.querySelector('[data-tab="inventario"]').click();
-      toast("Inventário reaberto para edição.");
-    }
-  }catch(err){
-    toast(err.message || "Não foi possível concluir a ação.");
+    await performAdminAction(action, inventoryId, pwd, false);
   }finally{
     $("adminConfirm").disabled=false;
   }
